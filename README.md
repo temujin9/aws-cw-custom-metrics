@@ -1,0 +1,3 @@
+CloudWatch, which powers the alarms which scale AWS auto-scaling groups, lacks metrics for memory. This is by design: CloudWatch uses external-to-the-machine metrics only (to avoid issues with reaching into customer OSes). This microservice closes that gap, and is a good place to collect other statistics which require machine access.
+
+Taken, with permission, from https://gist.github.com/shevron/6204349. Modified to work with [Flynn](https://flynn.io/) by [Nathaniel Eliot](http://github.com/temujin9).

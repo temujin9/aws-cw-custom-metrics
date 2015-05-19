@@ -1,0 +1,1 @@
+monitor: export PUBLISH_INTERVAL=${PUBLISH_INTERVAL:-15}; while ./publish-cw-metrics.py ; do sleep $PUBLISH_INTERVAL; done

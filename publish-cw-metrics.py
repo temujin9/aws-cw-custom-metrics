@@ -8,14 +8,15 @@ a boto credentials file and rely on it instead.
 
 Original idea based on https://github.com/colinbjohnson/aws-missing-tools
 
-(c) 2015 Shahar Evron, all rights reserved;
+(c) 2015 Shahar Evron, Nathaniel Eliot all rights reserved;
 You are free to use, modify and redistribute this software in any form
 under the conditions described in the LICENSE file included.
 '''
 
 import sys
 import re
-from boto.ec2 import cloudwatch
+import datetime
+from boto.ec2 import cloudwatch, autoscale
 from boto.utils import get_instance_metadata
 
 def collect_memory_usage():
@@ -35,10 +36,15 @@ def send_multi_metrics(instance_id, region, metrics, namespace='EC2/Memory',
     Send multiple metrics to CloudWatch
     metrics is expected to be a map of key -> value pairs of metrics
     '''
+    asg = autoscale.AutoScaleConnection()
+    asg_name = asg.get_all_autoscaling_instances(instance_ids=[instance_id])[0].group_name
     cw = cloudwatch.connect_to_region(region)
     cw.put_metric_data(namespace, metrics.keys(), metrics.values(),
                        unit=unit,
                        dimensions={"InstanceId": instance_id})
+    cw.put_metric_data(namespace, metrics.keys(), metrics.values(),
+                       unit=unit,
+                       dimensions={"AutoScalingGroupName": asg_name})
 
 if __name__ == '__main__':
     metadata = get_instance_metadata()
@@ -57,4 +63,6 @@ if __name__ == '__main__':
     metrics = {'MemUsage': mem_used / mem_usage['MemTotal'] * 100,
                'SwapUsage': swap_percent }
 
-    send_multi_metrics(instance_id, region, metrics)
+    result = send_multi_metrics(instance_id, region, metrics)
+
+    print str(datetime.datetime.now()) + ": sent metrics (" + instance_id + ": " + str(metrics) + ") to CloudWatch"
